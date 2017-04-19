@@ -9,10 +9,26 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import io.realm.Realm;
+import io.realm.RealmChangeListener;
+import io.realm.RealmResults;
+import io.realm.Sort;
 
 
 public class MainActivity extends AppCompatActivity {
+
+    private Realm mRealm; // Realmのメンバ変数。
+
+    // RealmChangeListenerクラスのmRealmListenerはRealmのデータベースに追加や削除など変化があった場合に呼ばれるリスナーです。
+    private RealmChangeListener mRealmListener = new RealmChangeListener() {
+      @Override
+        public void onChange(Object element) {
+            reloadListView();
+        }
+    };
 
     private ListView mListView; // ListViewのメンバ変数。
     private TaskAdapter mTaskAdapter; // TaskAdapterのメンバ変数。
@@ -30,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        // Realmの設定
+        mRealm = Realm.getDefaultInstance(); // getDefaultInstanceメソッドでオブジェクトを取得。
+        mRealm.addChangeListener(mRealmListener);
 
         // ListViewの設定
         mTaskAdapter = new TaskAdapter(MainActivity.this); // TaskAdapterのインスタンス。
@@ -52,19 +72,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // アプリ起動時に表示テスト用のタスクを作成する。
+        addTaskForTest();
+
         reloadListView(); // ページのリロード（再読み込み）を行う。
     }
 
     private void reloadListView() {
 
-        // 後でTaskクラスに変更する
-        List<String> taskList = new ArrayList<String>(); // ArrayListクラスのインスタンス。
-        taskList.add("aaa");
-        taskList.add("bbb");
-        taskList.add("ccc");
-
-        mTaskAdapter.setTaskList(taskList);
+        // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得。
+        RealmResults<Task> taskRealmResults = mRealm.where(Task.class).findAllSorted("date", Sort.DESCENDING);
+        // 上記の結果を、TaskListとしてセットする。
+        mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
+        // TaskのListView用のアダプタに渡す。
         mListView.setAdapter(mTaskAdapter);
+        // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
         mTaskAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mRealm.close(); // getDefaultInstanceメソッドで取得したRealmクラスのオブジェクトはcloseメソッドで終了させる必要があります。
+    }
+
+    private void addTaskForTest() {
+        Task task = new Task();
+        task.setTitle("作業");
+        task.setContents("プログラムを書いてPushする");
+        task.setDate(new Date());
+        task.setId(0);
+        mRealm.beginTransaction();
+        mRealm.copyToRealmOrUpdate(task);
+        mRealm.commitTransaction();
     }
 }

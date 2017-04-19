@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'realm-android' // Realm使用のための設定追加。
 
 android {
     compileSdkVersion 25
