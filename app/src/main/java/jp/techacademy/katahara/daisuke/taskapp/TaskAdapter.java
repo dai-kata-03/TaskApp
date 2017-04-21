@@ -18,11 +18,25 @@ import java.util.Locale;
 
 public class TaskAdapter extends BaseAdapter {
 
-    private LayoutInflater mLayoutInflater; // 他のxmlリソースのViewを取り扱うための仕組みであるLayoutInflateをメンバ変数で定義。
+    private LayoutInflater mLayoutInflater;
+    /** 他のxmlリソースのViewを取り扱うための仕組みであるLayoutInflateをメンバ変数で定義。動的にLayout.xmlファイルをセットすることができる。
+     * セットしてないlayout.xmlの中の要素(TextViewやButton)を書き換えたりもできる。
+     * とくになにもせずAndroidのListViewを表示したときは、単一のテキストまたはボタンなどが行になって表示されます。
+     * 色々な要素をリスト表示したいときには、たとえば、Webサイトの場合だとループの中にHTMLを書くだけで済むのですが、Androidの場合は、LayoutInflaterを利用してListViewの中に動的にxmlを差し込んで表示したりする必要があります。
+     */
+
+    /**
+     * リストをスクロールして、新しい行が表示されるタイミングでgetViewが実行されます。
+     * レイアウトが初めて作成される場合のみLayoutInflaterを実行します。それ以外は、表示されなくなったViewが引数に渡されてくるので再利用します。
+     */
+
+
 
     private List<Task> mTaskList; // リストの定義（メンバ変数）。
 
     public TaskAdapter(Context context) {
+
+        // xmlで定義したレイアウトを取得
         mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -47,6 +61,8 @@ public class TaskAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
+        // レイアウトが初めて作成される場合のみ作成
         if (convertView == null) {
             convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
         }

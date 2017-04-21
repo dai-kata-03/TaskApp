@@ -8,11 +8,12 @@ import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by Daisuke on 2017/04/19.
+ * これがデータベースファイルとなる。つまり、ここにデータを保持していく。
  */
 
 public class Task extends RealmObject implements Serializable {
     private String title; // タイトル
-    private String contents; // ないよう
+    private String contents; // 内容
     private Date date; // 日時
 
     // idをプライマリーキーとして設定
