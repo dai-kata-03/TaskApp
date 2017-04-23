@@ -19,6 +19,7 @@ public class Task extends RealmObject implements Serializable {
     // idをプライマリーキーとして設定
     @PrimaryKey
     private int id;
+    private String category; // カテゴリ追加・課題用
 
     public String getTitle() {
         return title;
@@ -50,6 +51,15 @@ public class Task extends RealmObject implements Serializable {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    // 課題用・カテゴリ追加
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
 }

@@ -10,8 +10,10 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ListView mListView; // ListViewのメンバ変数。
     private TaskAdapter mTaskAdapter; // TaskAdapterのメンバ変数。
+    private EditText mCategoryFilter; // カテゴリ追加・課題用
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
         // ListViewの設定
         mTaskAdapter = new TaskAdapter(MainActivity.this); // TaskAdapterのインスタンス。
         mListView = (ListView) findViewById(R.id.listView1);
+
+        // カテゴリフィルタの設定。課題用。
+        mCategoryFilter = (EditText) findViewById(R.id.category_filter_text);
 
         // ListViewをタップした時の処理
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -115,6 +121,10 @@ public class MainActivity extends AppCompatActivity {
                         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                         alarmManager.cancel(resultPendingIntent);
 
+                        // 長押しして再表示した場合はフィルタを解除する？
+                        EditText mCategoryFilter = new EditText(this);
+                        mCategoryFilter.getEditableText().clear();
+
                         reloadListView();
 
                     }
@@ -133,14 +143,30 @@ public class MainActivity extends AppCompatActivity {
 
     private void reloadListView() {
 
-        // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得。
-        RealmResults<Task> taskRealmResults = mRealm.where(Task.class).findAllSorted("date", Sort.DESCENDING);
-        // 上記の結果を、TaskListとしてセットする。
-        mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
-        // TaskのListView用のアダプタに渡す。
-        mListView.setAdapter(mTaskAdapter);
-        // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
-        mTaskAdapter.notifyDataSetChanged();
+        Log.d("DEBUG", String.valueOf(mCategoryFilter));
+
+        // カテゴリフィルタの有無判断。課題用。
+
+        // カテゴリフィルタなし
+            if (mCategoryFilter.length() == 0) {
+            // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得。
+            RealmResults<Task> taskRealmResults = mRealm.where(Task.class).findAllSorted("date", Sort.DESCENDING);
+            // 上記の結果を、TaskListとしてセットする。
+            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
+            // TaskのListView用のアダプタに渡す。
+            mListView.setAdapter(mTaskAdapter);
+            // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
+            mTaskAdapter.notifyDataSetChanged();
+            } else {
+            // カテゴリフィルタあり
+            RealmResults<Task> taskRealmResults = mRealm.where(Task.class).equalTo("category", String.valueOf(mCategoryFilter)).findAllSorted("date", Sort.DESCENDING);
+            // 上記の結果を、TaskListとしてセットする。
+            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
+            // TaskのListView用のアダプタに渡す。
+            mListView.setAdapter(mTaskAdapter);
+            // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
+            mTaskAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
