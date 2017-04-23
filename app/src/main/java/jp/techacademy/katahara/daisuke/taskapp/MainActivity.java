@@ -10,6 +10,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView mListView; // ListViewのメンバ変数。
     private TaskAdapter mTaskAdapter; // TaskAdapterのメンバ変数。
     private EditText mCategoryFilter; // カテゴリ追加・課題用
+    private String mFilter; // カテゴリ追加・課題用
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         // カテゴリフィルタの設定。課題用。
         mCategoryFilter = (EditText) findViewById(R.id.category_filter_text);
+        mCategoryFilter.addTextChangedListener(watchHandler);
 
         // ListViewをタップした時の処理
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -121,10 +126,6 @@ public class MainActivity extends AppCompatActivity {
                         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                         alarmManager.cancel(resultPendingIntent);
 
-                        // 長押しして再表示した場合はフィルタを解除する？
-                        EditText mCategoryFilter = new EditText(this);
-                        mCategoryFilter.getEditableText().clear();
-
                         reloadListView();
 
                     }
@@ -141,32 +142,50 @@ public class MainActivity extends AppCompatActivity {
         reloadListView(); // ページのリロード（再読み込み）を行う。
     }
 
+    // フィルタに入力された際にはフィルタ処理を走らせる。課題用。
+    private TextWatcher watchHandler = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            // フィルタ入力前の処理は今回はなし。
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            // フィルタ入力中の処理は今回はなし。
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            mFilter = mCategoryFilter.getText().toString();
+            reloadListView(); // ページのリロード（再読み込み）を行う。
+        }
+    };
+
+
     private void reloadListView() {
 
-        Log.d("DEBUG", String.valueOf(mCategoryFilter));
+        Log.d("DEBUG1", String.valueOf(mCategoryFilter));
+        Log.d("DEBUG2", String.valueOf(mCategoryFilter.length()));
 
         // カテゴリフィルタの有無判断。課題用。
 
         // カテゴリフィルタなし
             if (mCategoryFilter.length() == 0) {
-            // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得。
-            RealmResults<Task> taskRealmResults = mRealm.where(Task.class).findAllSorted("date", Sort.DESCENDING);
-            // 上記の結果を、TaskListとしてセットする。
-            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
-            // TaskのListView用のアダプタに渡す。
-            mListView.setAdapter(mTaskAdapter);
-            // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
-            mTaskAdapter.notifyDataSetChanged();
+                // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得。
+                RealmResults<Task> taskRealmResults = mRealm.where(Task.class).findAllSorted("date", Sort.DESCENDING);
+                // 上記の結果を、TaskListとしてセットする。
+                mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
             } else {
-            // カテゴリフィルタあり
-            RealmResults<Task> taskRealmResults = mRealm.where(Task.class).equalTo("category", String.valueOf(mCategoryFilter)).findAllSorted("date", Sort.DESCENDING);
-            // 上記の結果を、TaskListとしてセットする。
-            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
-            // TaskのListView用のアダプタに渡す。
-            mListView.setAdapter(mTaskAdapter);
-            // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
-            mTaskAdapter.notifyDataSetChanged();
-        }
+                // カテゴリフィルタあり
+                RealmResults<Task> taskRealmResults = mRealm.where(Task.class).equalTo("category", mFilter).findAllSorted("date", Sort.DESCENDING);
+                // 上記の結果を、TaskListとしてセットする。
+                mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResults));
+            }
+
+        // TaskのListView用のアダプタに渡す。
+        mListView.setAdapter(mTaskAdapter);
+        // 表示を更新するために、アダプターにデータが変更されたことを知らせる。
+        mTaskAdapter.notifyDataSetChanged();
     }
 
     @Override
