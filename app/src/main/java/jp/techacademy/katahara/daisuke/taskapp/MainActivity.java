@@ -1,5 +1,7 @@
 package jp.techacademy.katahara.daisuke.taskapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -99,6 +101,19 @@ public class MainActivity extends AppCompatActivity {
                         mRealm.beginTransaction();
                         results.deleteAllFromRealm();
                         mRealm.commitTransaction();
+
+                        // タスク削除時にアラームも一緒に削除する。
+
+                        Intent resultIntent = new Intent(getApplicationContext(), TaskAlarmReceiver.class);
+                        PendingIntent resultPendingIntent = PendingIntent.getBroadcast(
+                                MainActivity.this,
+                                task.getId(),
+                                resultIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                        );
+
+                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                        alarmManager.cancel(resultPendingIntent);
 
                         reloadListView();
 
